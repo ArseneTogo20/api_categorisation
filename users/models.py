@@ -1,7 +1,42 @@
 import uuid
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.core.validators import RegexValidator
+
+
+class CustomUserManager(BaseUserManager):
+    """
+    Manager pour le modèle utilisateur personnalisé.
+    """
+    def create_user(self, numero_de_telephone, password=None, **extra_fields):
+        """
+        Crée et sauvegarde un utilisateur avec le numéro de téléphone et le mot de passe.
+        """
+        if not numero_de_telephone:
+            raise ValueError("Le numéro de téléphone est obligatoire")
+        
+        # Le champ 'username' est maintenant géré par le numéro de téléphone
+        extra_fields.setdefault('username', numero_de_telephone)
+        
+        user = self.model(numero_de_telephone=numero_de_telephone, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, numero_de_telephone, password=None, **extra_fields):
+        """
+        Crée et sauvegarde un super-utilisateur.
+        """
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', 'admin') # Le rôle est admin par défaut pour un superuser
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Le super-utilisateur doit avoir is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Le super-utilisateur doit avoir is_superuser=True.')
+
+        return self.create_user(numero_de_telephone, password, **extra_fields)
 
 
 class CustomUser(AbstractUser):
@@ -48,8 +83,10 @@ class CustomUser(AbstractUser):
     
     # Configuration du modèle
     USERNAME_FIELD = 'numero_de_telephone'
-    REQUIRED_FIELDS = ['nom', 'prenom', 'username', 'email']
+    REQUIRED_FIELDS = ['nom', 'prenom', 'email']
     
+    objects = CustomUserManager() # Assigner le nouveau manager
+
     class Meta:
         verbose_name = "Utilisateur"
         verbose_name_plural = "Utilisateurs"

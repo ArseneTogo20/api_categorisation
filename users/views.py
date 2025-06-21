@@ -17,27 +17,26 @@ from .serializers import (
 )
 
 
-class UserRegistrationView(APIView):
+# Renommage pour plus de clarté, car cette vue est maintenant pour les admins
+class UserCreationByAdminView(APIView):
     """
-    Vue pour l'inscription d'un nouvel utilisateur
+    Vue pour la création d'un nouvel utilisateur PAR UN ADMIN.
+    Seuls les administrateurs peuvent accéder à cet endpoint.
     """
-    permission_classes = [permissions.AllowAny]
+    # CHangement de la permission ici
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             
-            # Générer les tokens JWT
-            refresh = RefreshToken.for_user(user)
-            
+            # Un admin crée le compte, mais on ne renvoie pas les tokens,
+            # car ce n'est pas l'admin qui va se connecter à la place de l'utilisateur.
+            # On renvoie juste les détails de l'utilisateur créé.
             return Response({
-                'message': 'Utilisateur créé avec succès',
-                'user': UserDetailSerializer(user).data,
-                'tokens': {
-                    'access': str(refresh.access_token),
-                    'refresh': str(refresh),
-                }
+                'message': 'Utilisateur créé avec succès par un administrateur.',
+                'user': UserDetailSerializer(user).data
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

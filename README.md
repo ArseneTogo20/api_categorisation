@@ -1,164 +1,65 @@
 # API de Catégorisation de Messages Financiers
 
-Une API RESTful développée avec Django et entièrement conteneurisée avec Docker. Elle fournit une base solide pour la gestion des utilisateurs, l'authentification JWT, et la catégorisation de messages financiers.
+Ce projet est une API REST développée avec Django et Django REST Framework, conçue pour traiter et catégoriser des messages financiers. L'ensemble du projet est conteneurisé avec Docker pour faciliter le développement et le déploiement.
 
----
+[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/downloads/release/python-311/)
+[![Django](https://img.shields.io/badge/Django-4.2-darkgreen.svg)](https://www.djangoproject.com/)
+[![Docker](https://img.shields.io/badge/Docker-blue.svg)](https://www.docker.com/)
 
-## 🚀 Démarrage Rapide (avec Docker)
+## Fonctionnalités
+- **Gestion complète des utilisateurs** : Authentification JWT, inscription, gestion de profil.
+- **Permissions basées sur les rôles** : Distinction entre les utilisateurs normaux et les administrateurs.
+- **API RESTful** : Endpoints clairs et structurés.
+- **Environnement Dockerisé** : Installation et déploiement simplifiés.
+- **Prêt pour le développement** : L'application `message_processing` est prête à accueillir la logique métier.
 
-Le moyen le plus simple et le plus rapide de lancer le projet. Assurez-vous que **Docker Desktop** est en cours d'exécution.
+## Démarrage Rapide (Quick Start)
 
-1.  **Clonez le projet**
-    ```bash
-    git clone <url-du-repo>
-    cd projet_categorisation
-    ```
+Suivez ces étapes pour lancer le projet en local.
 
-2.  **Lancez les conteneurs**
-    Cette commande unique construit et démarre l'API et la base de données.
-    ```bash
-    docker-compose up --build -d
-    ```
-    *(Le `-d` signifie "detached", pour le lancer en arrière-plan).*
+### Prérequis
+- [Docker](https://www.docker.com/get-started) & [Docker Compose](https://docs.docker.com/compose/install/)
 
-3.  **Créez un superutilisateur**
-    La première fois, créez un compte administrateur pour accéder à tout.
-    ```bash
-    docker-compose exec api python manage.py createsuperuser
-    ```
+### Installation
+1. **Clonez ce dépôt**
+   ```bash
+   git clone <URL_DU_REPOSITORY>
+   cd <NOM_DU_DOSSIER>
+   ```
 
-**C'est tout !** Votre environnement est maintenant opérationnel :
-*   **API disponible sur** : `http://localhost:8000/api/`
-*   **Documentation interactive (Swagger)** : `http://localhost:8000/swagger/`
-*   **Interface d'administration** : `http://localhost:8000/admin/`
+2. **Créez le fichier d'environnement**
+   Créez un fichier `.env` à la racine du projet et remplissez-le en vous basant sur cet exemple :
+   ```ini
+   SECRET_KEY=votre-secret-key
+   DEBUG=True
+   DB_HOST=db
+   DB_NAME=projet_categorisation
+   DB_USER=user_app
+   DB_PASSWORD=password_app
+   DB_ROOT_PASSWORD=root_password_123
+   DB_PORT=3306
+   ```
 
----
+3. **Lancez les conteneurs**
+   ```bash
+   docker-compose up --build -d
+   ```
 
-## 📖 Guide pour Développeur Frontend
+4. **Créez un compte administrateur**
+   ```bash
+   docker exec -it projet_api python manage.py createsuperuser
+   ```
+   Suivez les instructions pour créer votre premier utilisateur.
 
-Cette section contient tout ce dont vous avez besoin pour interagir avec l'API.
+Votre API est maintenant accessible sur `http://127.0.0.1:8000`.
 
-### URL de Base
-Toutes les requêtes d'API doivent être préfixées par :
-`http://localhost:8000/api`
+## Documentation
 
-### Flux d'Authentification JWT
+- La documentation complète du projet, incluant le détail de chaque endpoint de l'API, est disponible dans le fichier [`DOCUMENTATION.md`](./DOCUMENTATION.md).
+- Une fois l'application lancée, la documentation Swagger est également accessible sur `http://127.0.0.1:8000/swagger/` et ReDoc sur `http://127.0.0.1:8000/redoc/`.
 
-L'API utilise un système de jetons JWT standard.
-
-1.  **Obtenez les Tokens** : Lors de l'inscription (`/register`) ou de la connexion (`/login`), le serveur vous renvoie un `access_token` (durée de vie : 60 min) et un `refresh_token` (durée de vie : 24h).
-
-2.  **Stockez les Tokens** :
-    *   Stockez l'`access_token` en mémoire (ex: dans une variable d'état de votre application).
-    *   Stockez le `refresh_token` de manière persistante et sécurisée (ex: dans un cookie `HttpOnly` ou le `localStorage`).
-
-3.  **Effectuez des Requêtes Authentifiées** : Pour tous les endpoints protégés, ajoutez l'en-tête `Authorization`.
-    ```
-    Authorization: Bearer <votre_access_token>
-    ```
-
-4.  **Gérez l'Expiration** : Si une requête renvoie une erreur `401 Unauthorized`, l'`access_token` a expiré. Vous devez alors :
-    a. Appeler l'endpoint `POST /token/refresh/` en envoyant votre `refresh_token` dans le corps de la requête.
-    b. Vous recevrez en retour un nouvel `access_token`.
-    c. Mettez à jour l'`access_token` que vous avez en mémoire et relancez la requête qui avait échoué.
-
-### Endpoints de l'API
-
-> Pour tester et voir tous les détails, utilisez la [documentation Swagger](http://localhost:8000/swagger/).
-
-#### **Authentification**
-
-`POST /register/`
-*   **Description**: Crée un nouvel utilisateur.
-*   **Body**:
-    ```json
-    {
-        "nom": "Dupont", "prenom": "Jean",
-        "numero_de_telephone": "90112233",
-        "email": "jean.dupont@email.com",
-        "password": "MotDePasseSolide123!",
-        "password_confirm": "MotDePasseSolide123!"
-    }
-    ```
-
-`POST /login/`
-*   **Description**: Connecte un utilisateur existant.
-*   **Body**:
-    ```json
-    {
-        "numero_de_telephone": "90112233",
-        "password": "MotDePasseSolide123!"
-    }
-    ```
-
-`POST /token/refresh/`
-*   **Description**: Rafraîchit un `access_token` expiré.
-*   **Body**:
-    ```json
-    { "refresh": "<votre_refresh_token>" }
-    ```
-
-#### **Utilisateurs**
-
-`GET /profile/`
-*   **Description**: Récupère les informations du profil de l'utilisateur connecté.
-*   **Auth**: Requise (Bearer Token).
-
-`PUT /profile/`
-*   **Description**: Met à jour le profil de l'utilisateur connecté.
-*   **Auth**: Requise (Bearer Token).
-*   **Body**: `{ "nom": "NouveauNom", "email": "nouvel@email.com" }` (envoyez seulement les champs à modifier).
-
-`GET /users/`
-*   **Description**: Récupère la liste de tous les utilisateurs.
-*   **Auth**: Requise. **Rôle `admin` uniquement.**
-
----
-
-## 🛠️ Guide pour Développeur Backend
-
-Détails pour ceux qui souhaitent modifier ou étendre le code source.
-
-### Structure du Projet
-```
-.
-├── projet_categorisation/  # Configuration principale de Django
-├── users/                  # Application pour la gestion des utilisateurs
-├── message_processing/     # Application pour la logique métier
-├── .env                    # Fichier des variables d'environnement (NE PAS PARTAGER)
-├── Dockerfile              # Recette pour construire l'image de l'API
-├── docker-compose.yml      # Orchestration des conteneurs (API + DB)
-├── entrypoint.sh           # Script de démarrage du conteneur API
-├── manage.py               # Utilitaire Django
-├── requirements.txt        # Dépendances Python
-└── README.md               # Ce fichier
-```
-
-### Commandes Docker Utiles
-
-*   **Voir les logs en temps réel** :
-    `docker-compose logs -f`
-
-*   **Lancer une commande Django** (ex: créer des migrations) :
-    `docker-compose exec api python manage.py makemigrations`
-
-*   **Ouvrir un shell dans le conteneur** :
-    `docker-compose exec api /bin/sh`
-
-*   **Arrêter les conteneurs** :
-    `docker-compose down`
-
-*   **Forcer une reconstruction de l'image** :
-    `docker-compose up --build -d`
-
-*   **Tout supprimer (conteneurs ET base de données)** :
-    `docker-compose down -v`
-
-### Installation sans Docker (Alternative)
-
-1.  Assurez-vous d'avoir Python 3.11+ et un serveur MySQL.
-2.  Créez un environnement virtuel (`python -m venv venv` et `source venv/bin/activate`).
-3.  Installez les dépendances : `pip install -r requirements.txt`.
-4.  Configurez un fichier `.env` avec les accès à votre base de données locale (`DB_HOST=localhost`).
-5.  Lancez les migrations : `python manage.py migrate`.
-6.  Lancez le serveur : `python manage.py runserver`.
+## Prochaines Étapes
+Le développement de la logique métier principale doit se faire dans l'application `message_processing`.
+- Définir les modèles dans `message_processing/models.py`.
+- Créer les sérialiseurs et les vues correspondantes.
+- Ajouter les nouvelles URL dans `message_processing/urls.py`.
