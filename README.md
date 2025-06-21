@@ -1,52 +1,125 @@
 # API de Catégorisation de Messages Financiers
 
-Ce projet est une API REST développée avec Django et Django REST Framework, conçue pour recevoir, traiter et catégoriser des messages de transactions financières. Elle est entièrement dockerisée pour faciliter le développement et le déploiement.
-
-## Table des Matières
-1.  [Technologies](#technologies)
-2.  [Fonctionnalités Clés](#fonctionnalités-clés)
-3.  [Pour le Développeur Backend](#pour-le-développeur-backend)
-    *   [Structure du Projet](#structure-du-projet)
-    *   [Installation avec Docker (Recommandé)](#installation-avec-docker-recommandé)
-    *   [Commandes Docker Utiles](#commandes-docker-utiles)
-    *   [Installation Locale (Alternative)](#installation-locale-alternative)
-4.  [Pour le Développeur Frontend](#pour-le-développeur-frontend)
-    *   [URL de Base de l'API](#url-de-base-de-lapi)
-    *   [Flux d'Authentification JWT](#flux-dauthentification-jwt)
-    *   [Documentation des Endpoints](#documentation-des-endpoints)
-        *   [Authentification](#authentification-1)
-        *   [Gestion des Utilisateurs](#gestion-des-utilisateurs)
+Une API RESTful développée avec Django et entièrement conteneurisée avec Docker. Elle fournit une base solide pour la gestion des utilisateurs, l'authentification JWT, et la catégorisation de messages financiers.
 
 ---
 
-## Technologies
+## 🚀 Démarrage Rapide (avec Docker)
 
-*   **Backend**: Python 3.11, Django 4.2, Django REST Framework 3.14
-*   **Base de Données**: MySQL 8.0
-*   **Serveur d'Application**: Gunicorn
-*   **Authentification**: JWT (djangorestframework-simplejwt)
-*   **Conteneurisation**: Docker & Docker Compose
-*   **Documentation API**: Swagger (drf-yasg) & ReDoc
+Le moyen le plus simple et le plus rapide de lancer le projet. Assurez-vous que **Docker Desktop** est en cours d'exécution.
+
+1.  **Clonez le projet**
+    ```bash
+    git clone <url-du-repo>
+    cd projet_categorisation
+    ```
+
+2.  **Lancez les conteneurs**
+    Cette commande unique construit et démarre l'API et la base de données.
+    ```bash
+    docker-compose up --build -d
+    ```
+    *(Le `-d` signifie "detached", pour le lancer en arrière-plan).*
+
+3.  **Créez un superutilisateur**
+    La première fois, créez un compte administrateur pour accéder à tout.
+    ```bash
+    docker-compose exec api python manage.py createsuperuser
+    ```
+
+**C'est tout !** Votre environnement est maintenant opérationnel :
+*   **API disponible sur** : `http://localhost:8000/api/`
+*   **Documentation interactive (Swagger)** : `http://localhost:8000/swagger/`
+*   **Interface d'administration** : `http://localhost:8000/admin/`
 
 ---
 
-## Fonctionnalités Clés
+## 📖 Guide pour Développeur Frontend
 
-*   ✅ Gestion complète des utilisateurs (CRUD).
-*   ✅ Authentification sécurisée par JWT avec système de `refresh token`.
-*   ✅ Permissions basées sur les rôles (Utilisateur, Administrateur).
-*   ✅ Environnement de développement et de production entièrement dockerisé.
-*   ✅ Documentation automatique de l'API via Swagger et ReDoc.
-*   *À venir : Endpoint de traitement et de catégorisation des messages.*
+Cette section contient tout ce dont vous avez besoin pour interagir avec l'API.
+
+### URL de Base
+Toutes les requêtes d'API doivent être préfixées par :
+`http://localhost:8000/api`
+
+### Flux d'Authentification JWT
+
+L'API utilise un système de jetons JWT standard.
+
+1.  **Obtenez les Tokens** : Lors de l'inscription (`/register`) ou de la connexion (`/login`), le serveur vous renvoie un `access_token` (durée de vie : 60 min) et un `refresh_token` (durée de vie : 24h).
+
+2.  **Stockez les Tokens** :
+    *   Stockez l'`access_token` en mémoire (ex: dans une variable d'état de votre application).
+    *   Stockez le `refresh_token` de manière persistante et sécurisée (ex: dans un cookie `HttpOnly` ou le `localStorage`).
+
+3.  **Effectuez des Requêtes Authentifiées** : Pour tous les endpoints protégés, ajoutez l'en-tête `Authorization`.
+    ```
+    Authorization: Bearer <votre_access_token>
+    ```
+
+4.  **Gérez l'Expiration** : Si une requête renvoie une erreur `401 Unauthorized`, l'`access_token` a expiré. Vous devez alors :
+    a. Appeler l'endpoint `POST /token/refresh/` en envoyant votre `refresh_token` dans le corps de la requête.
+    b. Vous recevrez en retour un nouvel `access_token`.
+    c. Mettez à jour l'`access_token` que vous avez en mémoire et relancez la requête qui avait échoué.
+
+### Endpoints de l'API
+
+> Pour tester et voir tous les détails, utilisez la [documentation Swagger](http://localhost:8000/swagger/).
+
+#### **Authentification**
+
+`POST /register/`
+*   **Description**: Crée un nouvel utilisateur.
+*   **Body**:
+    ```json
+    {
+        "nom": "Dupont", "prenom": "Jean",
+        "numero_de_telephone": "90112233",
+        "email": "jean.dupont@email.com",
+        "password": "MotDePasseSolide123!",
+        "password_confirm": "MotDePasseSolide123!"
+    }
+    ```
+
+`POST /login/`
+*   **Description**: Connecte un utilisateur existant.
+*   **Body**:
+    ```json
+    {
+        "numero_de_telephone": "90112233",
+        "password": "MotDePasseSolide123!"
+    }
+    ```
+
+`POST /token/refresh/`
+*   **Description**: Rafraîchit un `access_token` expiré.
+*   **Body**:
+    ```json
+    { "refresh": "<votre_refresh_token>" }
+    ```
+
+#### **Utilisateurs**
+
+`GET /profile/`
+*   **Description**: Récupère les informations du profil de l'utilisateur connecté.
+*   **Auth**: Requise (Bearer Token).
+
+`PUT /profile/`
+*   **Description**: Met à jour le profil de l'utilisateur connecté.
+*   **Auth**: Requise (Bearer Token).
+*   **Body**: `{ "nom": "NouveauNom", "email": "nouvel@email.com" }` (envoyez seulement les champs à modifier).
+
+`GET /users/`
+*   **Description**: Récupère la liste de tous les utilisateurs.
+*   **Auth**: Requise. **Rôle `admin` uniquement.**
 
 ---
 
-## Pour le Développeur Backend
+## 🛠️ Guide pour Développeur Backend
 
-Cette section vous guide pour mettre en place l'environnement de développement.
+Détails pour ceux qui souhaitent modifier ou étendre le code source.
 
 ### Structure du Projet
-
 ```
 .
 ├── projet_categorisation/  # Configuration principale de Django
@@ -61,234 +134,31 @@ Cette section vous guide pour mettre en place l'environnement de développement.
 └── README.md               # Ce fichier
 ```
 
-### Installation avec Docker (Recommandé)
-
-Assurez-vous que **Docker** et **Docker Compose** sont installés et en cours d'exécution sur votre machine.
-
-1.  **Clonez le projet**
-    ```bash
-    git clone <url-du-repo>
-    cd projet_categorisation
-    ```
-
-2.  **Créez le fichier d'environnement**
-    Le projet utilise un fichier `.env` pour gérer les secrets. Copiez l'exemple et personnalisez-le si nécessaire.
-    ```bash
-    # Sur Windows (PowerShell)
-    copy .env.example .env
-
-    # Sur Linux/macOS
-    cp .env.example .env
-    ```
-    *Note : J'ai déjà créé le fichier `.env` pour vous, cette étape est pour information.*
-
-3.  **Lancez les conteneurs**
-    Cette commande unique va construire l'image de l'API, télécharger l'image MySQL, et démarrer les deux conteneurs en arrière-plan.
-    ```bash
-    docker-compose up --build -d
-    ```
-
-4.  **Créez un superutilisateur**
-    La première fois, vous aurez besoin d'un administrateur pour accéder à l'interface d'administration.
-    ```bash
-    docker-compose exec api python manage.py createsuperuser
-    ```
-    Suivez les instructions pour créer votre compte.
-
-Votre environnement est prêt !
-*   L'API est accessible sur `http://localhost:8000`
-*   La base de données tourne sur le port `3307` de votre machine (mappé au port 3306 du conteneur).
-*   L'admin Django est sur `http://localhost:8000/admin/`
-
 ### Commandes Docker Utiles
 
 *   **Voir les logs en temps réel** :
-    ```bash
-    docker-compose logs -f
-    ```
+    `docker-compose logs -f`
 
-*   **Exécuter une commande dans le conteneur de l'API** (ex: lancer les migrations) :
-    ```bash
-    docker-compose exec api <votre-commande>
-    # Exemple:
-    docker-compose exec api python manage.py makemigrations
-    ```
+*   **Lancer une commande Django** (ex: créer des migrations) :
+    `docker-compose exec api python manage.py makemigrations`
+
+*   **Ouvrir un shell dans le conteneur** :
+    `docker-compose exec api /bin/sh`
 
 *   **Arrêter les conteneurs** :
-    ```bash
-    docker-compose down
-    ```
+    `docker-compose down`
 
-*   **Arrêter et supprimer la base de données** (pour repartir de zéro) :
-    ```bash
-    docker-compose down -v
-    ```
+*   **Forcer une reconstruction de l'image** :
+    `docker-compose up --build -d`
 
-### Installation Locale (Alternative)
+*   **Tout supprimer (conteneurs ET base de données)** :
+    `docker-compose down -v`
 
-Si vous ne souhaitez pas utiliser Docker, vous pouvez suivre les étapes traditionnelles :
+### Installation sans Docker (Alternative)
+
 1.  Assurez-vous d'avoir Python 3.11+ et un serveur MySQL.
-2.  Créez et activez un environnement virtuel.
+2.  Créez un environnement virtuel (`python -m venv venv` et `source venv/bin/activate`).
 3.  Installez les dépendances : `pip install -r requirements.txt`.
-4.  Configurez vos variables d'environnement pour la base de données.
+4.  Configurez un fichier `.env` avec les accès à votre base de données locale (`DB_HOST=localhost`).
 5.  Lancez les migrations : `python manage.py migrate`.
-6.  Lancez le serveur de développement : `python manage.py runserver`.
-
----
-
-## Pour le Développeur Frontend
-
-Cette section explique comment interagir avec l'API.
-
-### URL de Base de l'API
-
-L'URL de base pour toutes les requêtes est : `http://localhost:8000/api/`
-
-### Flux d'Authentification JWT
-
-L'API utilise des `access token` (courte durée) et des `refresh token` (longue durée).
-
-1.  **Inscription/Connexion** : L'utilisateur s'inscrit ou se connecte. Le serveur renvoie un `access_token` et un `refresh_token`.
-2.  **Stockage des Tokens** : Stockez le `refresh_token` de manière sécurisée et persistante (ex: `localStorage` ou `HttpOnly cookie`). Stockez l'`access_token` en mémoire.
-3.  **Requêtes Authentifiées** : Pour chaque requête vers un endpoint protégé, incluez l'`access_token` dans l'en-tête :
-    ```
-    Authorization: Bearer <votre_access_token>
-    ```
-4.  **Gestion de l'Expiration** : Si une requête renvoie une erreur `401 Unauthorized`, cela signifie que l'`access_token` a expiré.
-5.  **Rafraîchissement** : Utilisez le `refresh_token` pour appeler l'endpoint `POST /api/token/refresh/`. Vous recevrez un nouvel `access_token`.
-6.  **Nouvel Essai** : Réessayez la requête qui avait échoué à l'étape 4 avec le nouvel `access_token`.
-7.  **Déconnexion** : Supprimez les tokens du stockage local. Pour plus de sécurité, vous pouvez appeler `POST /api/logout/` pour invalider le `refresh_token` côté serveur.
-
-### Documentation des Endpoints
-
-Voici les endpoints principaux. Pour une documentation interactive complète, visitez :
-*   **Swagger UI**: `http://localhost:8000/swagger/`
-*   **ReDoc**: `http://localhost:8000/redoc/`
-
----
-
-#### Authentification
-
-##### `POST /api/register/`
-Crée un nouvel utilisateur.
-*   **Authentification**: Aucune requise.
-*   **Request Body**:
-    ```json
-    {
-        "nom": "Dupont",
-        "prenom": "Jean",
-        "numero_de_telephone": "90112233",
-        "email": "jean.dupont@email.com",
-        "password": "votreMotDePasseSolide123!",
-        "password_confirm": "votreMotDePasseSolide123!"
-    }
-    ```
-*   **Success Response (201 CREATED)**:
-    ```json
-    {
-        "message": "Utilisateur créé avec succès",
-        "user": { "user_id": "...", "nom": "Dupont", ... },
-        "tokens": {
-            "access": "eyJ...",
-            "refresh": "eyJ..."
-        }
-    }
-    ```
-
-##### `POST /api/login/`
-Connecte un utilisateur et renvoie les tokens.
-*   **Authentification**: Aucune requise.
-*   **Request Body**:
-    ```json
-    {
-        "numero_de_telephone": "90112233",
-        "password": "votreMotDePasseSolide123!"
-    }
-    ```
-*   **Success Response (200 OK)**:
-    ```json
-    {
-        "message": "Connexion réussie",
-        "user": { ... },
-        "tokens": {
-            "access": "eyJ...",
-            "refresh": "eyJ..."
-        }
-    }
-    ```
-
-##### `POST /api/token/refresh/`
-Renvoie un nouvel `access_token` valide.
-*   **Authentification**: Aucune requise.
-*   **Request Body**:
-    ```json
-    {
-        "refresh": "<votre_refresh_token>"
-    }
-    ```
-*   **Success Response (200 OK)**:
-    ```json
-    {
-        "access": "eyJ...",
-        "refresh": "eyJ..." // Un nouveau refresh token est aussi renvoyé
-    }
-    ```
-
-##### `POST /api/logout/`
-Invalide (blacklist) un `refresh_token` pour déconnecter l'utilisateur de manière sécurisée.
-*   **Authentification**: Requise (`Bearer <access_token>`).
-*   **Request Body**:
-    ```json
-    {
-        "refresh": "<votre_refresh_token>"
-    }
-    ```
-*   **Success Response (200 OK)**:
-    ```json
-    { "message": "Déconnexion réussie" }
-    ```
-
----
-
-#### Gestion des Utilisateurs
-
-##### `GET /api/users/`
-Récupère la liste de tous les utilisateurs.
-*   **Authentification**: Requise. **Rôle `admin` uniquement.**
-*   **Success Response (200 OK)**:
-    ```json
-    [
-        { "user_id": "...", "nom": "Admin", "role": "admin", ... },
-        { "user_id": "...", "nom": "Dupont", "role": "utilisateur", ... }
-    ]
-    ```
-
-##### `GET /api/profile/`
-Récupère les informations du profil de l'utilisateur actuellement connecté.
-*   **Authentification**: Requise (`Bearer <access_token>`).
-*   **Success Response (200 OK)**:
-    ```json
-    {
-        "user_id": "...",
-        "nom": "Dupont",
-        ...
-    }
-    ```
-
-##### `PUT /api/profile/`
-Met à jour le profil de l'utilisateur actuellement connecté.
-*   **Authentification**: Requise (`Bearer <access_token>`).
-*   **Request Body** (envoyez seulement les champs à modifier):
-    ```json
-    {
-        "nom": "Durand",
-        "email": "jean.durand@email.com"
-    }
-    ```
-*   **Success Response (200 OK)**:
-    ```json
-    {
-        "message": "Profil mis à jour avec succès",
-        "user": { "user_id": "...", "nom": "Durand", ... }
-    }
-    ``` 
+6.  Lancez le serveur : `python manage.py runserver`.
