@@ -1,0 +1,30 @@
+services:
+  # Service pour l'application Django
+  api:
+    build: .
+    container_name: projet_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+
+  # Service pour la base de données MySQL
+  db:
+    image: mysql:8.0
+    container_name: projet_db
+    ports:
+      - "3307:3306" # Expose le port 3306 du conteneur sur le port 3307 de l'hôte
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data: 

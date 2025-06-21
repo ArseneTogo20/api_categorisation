@@ -1,0 +1,44 @@
+# Fichiers secrets - NE JAMAIS PARTAGER
+.env
+*.env
+
+# Dépendances et environnement virtuel
+venv/
+env/
+.venv/
+lib/
+lib64/
+include/
+bin/
+scripts/
+
+# Fichiers de cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Fichiers de base de données
+*.sqlite3
+db.sqlite3-journal
+
+# Fichiers média et statiques générés par Django
+media/
+staticfiles/
+
+# Logs
+logs/
+*.log
+
+# Fichiers de l'IDE
+.vscode/
+.idea/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+docker-compose.yml.prod 
