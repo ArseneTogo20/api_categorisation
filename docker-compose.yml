@@ -12,6 +12,24 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
+
+  # Service pour les workers Celery
+  celery_worker:
+    build: .
+    container_name: projet_celery_worker
+    command: celery -A projet_categorisation worker --loglevel=info --concurrency=4
+    volumes:
+      - .:/app
+    env_file:
+      - ./.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
 
   # Service pour la base de données MySQL
   db:
@@ -32,5 +50,15 @@ services:
       timeout: 5s
       retries: 5
 
+  # Service Redis pour Celery
+  redis:
+    image: redis:7.2-alpine
+    container_name: projet_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
-  mysql_data: 
+  mysql_data:
+  redis_data: 

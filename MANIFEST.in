@@ -1,0 +1,27 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include requirements.txt
+include requirements-dev.txt
+include docker-compose.yml
+include docker-compose.prod.yml
+include Dockerfile
+include Dockerfile.prod
+include .env.example
+include Makefile
+include pytest.ini
+include pyproject.toml
+include setup.py
+
+recursive-include scripts *.sh
+recursive-include nginx *.conf
+recursive-include .github *
+
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .env
+global-exclude *.log
+global-exclude .DS_Store
+global-exclude Thumbs.db 

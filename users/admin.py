@@ -8,13 +8,13 @@ class CustomUserAdmin(UserAdmin):
     """
     Configuration de l'interface d'administration pour CustomUser
     """
-    list_display = ('numero_de_telephone', 'nom', 'prenom', 'email', 'role', 'is_active', 'date_creation')
+    list_display = ('phoneNumber', 'nom', 'prenom', 'email', 'role', 'is_active', 'date_creation')
     list_filter = ('role', 'is_active', 'date_creation')
-    search_fields = ('numero_de_telephone', 'nom', 'prenom', 'email')
+    search_fields = ('phoneNumber', 'nom', 'prenom', 'email')
     ordering = ('-date_creation',)
     
     fieldsets = (
-        (None, {'fields': ('numero_de_telephone', 'password')}),
+        (None, {'fields': ('phoneNumber', 'password')}),
         ('Informations personnelles', {'fields': ('nom', 'prenom', 'email')}),
         ('Permissions', {
             'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
@@ -25,7 +25,7 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('numero_de_telephone', 'nom', 'prenom', 'email', 'password1', 'password2', 'role'),
+            'fields': ('phoneNumber', 'nom', 'prenom', 'email', 'password1', 'password2', 'role'),
         }),
     )
     

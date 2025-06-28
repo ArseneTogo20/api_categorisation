@@ -14,7 +14,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validators=[validate_password],
         style={'input_type': 'password'}
     )
-    password_confirm = serializers.CharField(
+    passwordConfirm = serializers.CharField(
         write_only=True,
         required=True,
         style={'input_type': 'password'}
@@ -23,24 +23,24 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'nom', 'prenom', 'numero_de_telephone', 'email',
-            'password', 'password_confirm'
+            'nom', 'prenom', 'phoneNumber', 'email',
+            'password', 'passwordConfirm'
         ]
         extra_kwargs = {
             'nom': {'required': True},
             'prenom': {'required': True},
-            'numero_de_telephone': {'required': True},
+            'phoneNumber': {'required': True},
             'email': {'required': True},
         }
     
     def validate(self, attrs):
         # Vérifier que les mots de passe correspondent
-        if attrs['password'] != attrs['password_confirm']:
+        if attrs['password'] != attrs['passwordConfirm']:
             raise serializers.ValidationError("Les mots de passe ne correspondent pas.")
         
         # Vérifier que le numéro de téléphone n'existe pas déjà
-        numero_de_telephone = attrs.get('numero_de_telephone')
-        if CustomUser.objects.filter(numero_de_telephone=numero_de_telephone).exists():
+        phoneNumber = attrs.get('phoneNumber')
+        if CustomUser.objects.filter(phoneNumber=phoneNumber).exists():
             raise serializers.ValidationError("Ce numéro de téléphone est déjà utilisé.")
         
         # Vérifier que l'email n'existe pas déjà
@@ -51,12 +51,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
-        # Supprimer password_confirm des données validées
-        validated_data.pop('password_confirm')
+        # Supprimer passwordConfirm des données validées
+        validated_data.pop('passwordConfirm')
         
         # Créer l'utilisateur avec le mot de passe hashé
         user = CustomUser.objects.create_user(
-            username=validated_data['numero_de_telephone'],  # Utiliser le numéro comme username
+            username=validated_data['phoneNumber'],  # Utiliser le numéro comme username
             **validated_data
         )
         
@@ -67,7 +67,7 @@ class UserLoginSerializer(serializers.Serializer):
     """
     Sérialiseur pour la connexion utilisateur
     """
-    numero_de_telephone = serializers.CharField(max_length=15)
+    phoneNumber = serializers.CharField(max_length=15)
     password = serializers.CharField(
         max_length=128,
         write_only=True,
@@ -75,20 +75,20 @@ class UserLoginSerializer(serializers.Serializer):
     )
     
     def validate(self, attrs):
-        numero_de_telephone = attrs.get('numero_de_telephone')
+        phoneNumber = attrs.get('phoneNumber')
         password = attrs.get('password')
         
-        if numero_de_telephone and password:
+        if phoneNumber and password:
             # Nettoyer le numéro de téléphone
-            numero_de_telephone = ''.join(filter(str.isdigit, numero_de_telephone))
-            if not numero_de_telephone.startswith('228'):
-                numero_de_telephone = '228' + numero_de_telephone
-            numero_de_telephone = '+' + numero_de_telephone
+            phoneNumber = ''.join(filter(str.isdigit, phoneNumber))
+            if not phoneNumber.startswith('228'):
+                phoneNumber = '228' + phoneNumber
+            phoneNumber = '+' + phoneNumber
             
             # Authentifier l'utilisateur
             user = authenticate(
                 request=self.context.get('request'),
-                username=numero_de_telephone,
+                username=phoneNumber,
                 password=password
             )
             
@@ -103,7 +103,7 @@ class UserLoginSerializer(serializers.Serializer):
                 )
             
             attrs['user'] = user
-            attrs['numero_de_telephone'] = numero_de_telephone
+            attrs['phoneNumber'] = phoneNumber
         else:
             raise serializers.ValidationError(
                 "Le numéro de téléphone et le mot de passe sont requis."
@@ -121,7 +121,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'user_id', 'nom', 'prenom', 'numero_de_telephone', 'email',
+            'user_id', 'nom', 'prenom', 'phoneNumber', 'email',
             'role', 'date_creation', 'date_modification', 'is_active'
         ]
         read_only_fields = ['user_id', 'date_creation', 'date_modification']
@@ -155,13 +155,13 @@ class ChangePasswordSerializer(serializers.Serializer):
         validators=[validate_password],
         style={'input_type': 'password'}
     )
-    new_password_confirm = serializers.CharField(
+    new_passwordConfirm = serializers.CharField(
         required=True,
         style={'input_type': 'password'}
     )
     
     def validate(self, attrs):
-        if attrs['new_password'] != attrs['new_password_confirm']:
+        if attrs['new_password'] != attrs['new_passwordConfirm']:
             raise serializers.ValidationError("Les nouveaux mots de passe ne correspondent pas.")
         return attrs
     

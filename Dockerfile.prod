@@ -1,0 +1,50 @@
+# Dockerfile pour la production
+FROM python:3.11-slim
+
+# Définir les variables d'environnement
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    DJANGO_SETTINGS_MODULE=projet_categorisation.settings
+
+# Créer un utilisateur non-root
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Installer les dépendances système
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    default-libmysqlclient-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Copier les fichiers de dépendances
+COPY requirements.txt .
+
+# Installer les dépendances Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copier le code source
+COPY . .
+
+# Créer les répertoires nécessaires
+RUN mkdir -p /app/logs /app/static /app/media
+
+# Changer les permissions
+RUN chown -R appuser:appuser /app
+
+# Passer à l'utilisateur non-root
+USER appuser
+
+# Exposer le port
+EXPOSE 8000
+
+# Script de démarrage
+COPY scripts/start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Point d'entrée
+ENTRYPOINT ["/start.sh"] 

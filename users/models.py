@@ -8,22 +8,22 @@ class CustomUserManager(BaseUserManager):
     """
     Manager pour le modèle utilisateur personnalisé.
     """
-    def create_user(self, numero_de_telephone, password=None, **extra_fields):
+    def create_user(self, phoneNumber, password=None, **extra_fields):
         """
         Crée et sauvegarde un utilisateur avec le numéro de téléphone et le mot de passe.
         """
-        if not numero_de_telephone:
+        if not phoneNumber:
             raise ValueError("Le numéro de téléphone est obligatoire")
         
         # Le champ 'username' est maintenant géré par le numéro de téléphone
-        extra_fields.setdefault('username', numero_de_telephone)
+        extra_fields.setdefault('username', phoneNumber)
         
-        user = self.model(numero_de_telephone=numero_de_telephone, **extra_fields)
+        user = self.model(phoneNumber=phoneNumber, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, numero_de_telephone, password=None, **extra_fields):
+    def create_superuser(self, phoneNumber, password=None, **extra_fields):
         """
         Crée et sauvegarde un super-utilisateur.
         """
@@ -36,7 +36,7 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Le super-utilisateur doit avoir is_superuser=True.')
 
-        return self.create_user(numero_de_telephone, password, **extra_fields)
+        return self.create_user(phoneNumber, password, **extra_fields)
 
 
 class CustomUser(AbstractUser):
@@ -62,7 +62,7 @@ class CustomUser(AbstractUser):
         message="Le numéro de téléphone doit être au format togolais (ex: 90123456 ou +22890123456)"
     )
     
-    numero_de_telephone = models.CharField(
+    phoneNumber = models.CharField(
         max_length=15,
         unique=True,
         validators=[phone_regex],
@@ -82,7 +82,7 @@ class CustomUser(AbstractUser):
     is_active = models.BooleanField(default=True, verbose_name="Compte actif")
     
     # Configuration du modèle
-    USERNAME_FIELD = 'numero_de_telephone'
+    USERNAME_FIELD = 'phoneNumber'
     REQUIRED_FIELDS = ['nom', 'prenom', 'email']
     
     objects = CustomUserManager() # Assigner le nouveau manager
@@ -94,7 +94,7 @@ class CustomUser(AbstractUser):
         ordering = ['-date_creation']
     
     def __str__(self):
-        return f"{self.prenom} {self.nom} ({self.numero_de_telephone})"
+        return f"{self.prenom} {self.nom} ({self.phoneNumber})"
     
     def get_full_name(self):
         return f"{self.prenom} {self.nom}"
@@ -108,14 +108,14 @@ class CustomUser(AbstractUser):
     
     def save(self, *args, **kwargs):
         # Nettoyer le numéro de téléphone
-        if self.numero_de_telephone:
+        if self.phoneNumber:
             # Supprimer les espaces et caractères spéciaux
-            self.numero_de_telephone = ''.join(filter(str.isdigit, self.numero_de_telephone))
+            self.phoneNumber = ''.join(filter(str.isdigit, self.phoneNumber))
             # Ajouter le préfixe +228 si nécessaire
-            if not self.numero_de_telephone.startswith('228'):
-                self.numero_de_telephone = '228' + self.numero_de_telephone
+            if not self.phoneNumber.startswith('228'):
+                self.phoneNumber = '228' + self.phoneNumber
             # Ajouter le + au début
-            if not self.numero_de_telephone.startswith('+'):
-                self.numero_de_telephone = '+' + self.numero_de_telephone
+            if not self.phoneNumber.startswith('+'):
+                self.phoneNumber = '+' + self.phoneNumber
         
         super().save(*args, **kwargs)

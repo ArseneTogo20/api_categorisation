@@ -42,6 +42,7 @@ urlpatterns = [
     # API URLs
     path('api/', include('users.urls')),
     path('api/', include('message_processing.urls')),
+    path('api/', include('processed_messages.urls')),
     
     # Documentation Swagger
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),

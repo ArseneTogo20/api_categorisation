@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     # Local apps
     'users',
     'message_processing',
+    'processed_messages',
 ]
 
 MIDDLEWARE = [
@@ -299,3 +300,6 @@ LOGGING = {
 
 # Create logs directory if it doesn't exist
 os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
+
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
